@@ -1,0 +1,282 @@
+/**
+ * @license
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+import React, { useState } from 'react';
+import { Camera, Image as ImageIcon, Plus, Heart, Sparkles, AlertCircle } from 'lucide-react';
+
+interface PolaroidPhoto {
+  id: string;
+  title: string;
+  date: string;
+  note: string;
+  imageUrl: string;
+  filter: 'vintage' | 'sepia' | 'cyan' | 'neon' | 'crayon';
+  likes: number;
+}
+
+const INITIAL_PHOTOS: PolaroidPhoto[] = [
+  {
+    id: 'char-1',
+    title: '동네 절친들 수학여행 단체사진',
+    date: '2002. 05. 14',
+    note: '친구들이랑 경주 불국사 앞에서 부끄러운 브이 V_V.. 우리 우정 평생 가자!! (민석, 은지, 영호, 지우)',
+    imageUrl: '/src/assets/images/field_trip_group_1780374770549.png',
+    filter: 'vintage',
+    likes: 37
+  },
+  {
+    id: 'char-2',
+    title: '지탈하며 놀 사람!',
+    date: '2001. 09. 23',
+    note: '"탈출!" 소리와 함께 미끄럼틀을 가로지르며 도망치던 지옥탈출 게임. 해질 때까지 흙먼지 털어가며 뛰어놀던 아파트 놀이터.',
+    imageUrl: '/src/assets/images/playground_jital_2000s_1780374963311.png',
+    filter: 'sepia',
+    likes: 21
+  },
+  {
+    id: 'char-3',
+    title: '처음 스티커 사진 찍은 날!',
+    date: '2003. 11. 08',
+    note: '수수하고 서툴렀던 꾸미기 솜씨ㅋㅋㅋ 손으로 오린 테두리가 삐뚤빼뚤 정답다 짱친구 평생인생!!',
+    imageUrl: '/src/assets/images/retro_sticker_booth_1780374656020.png',
+    filter: 'crayon',
+    likes: 45
+  },
+  {
+    id: 'char-4',
+    title: '학교 앞 떡볶이 폭풍흡입',
+    date: '2000. 12. 15',
+    note: '김말이 튀김 하나 더 먹겠다고 지우랑 투닥투닥 싸우던 소소한 저녁 한 그릇. 너무 보고싶은 날.',
+    imageUrl: '/src/assets/images/retro_tteokbokki_school_1780375074122.png',
+    filter: 'vintage',
+    likes: 19
+  }
+];
+
+export default function PhotoAlbum() {
+  const [photos, setPhotos] = useState<PolaroidPhoto[]>(INITIAL_PHOTOS);
+  const [newTitle, setNewTitle] = useState('');
+  const [newNote, setNewNote] = useState('');
+  const [newFilter, setNewFilter] = useState<'vintage' | 'sepia' | 'cyan' | 'neon' | 'crayon'>('vintage');
+  const [isAdding, setIsAdding] = useState(false);
+  const [alertMsg, setAlertMsg] = useState('');
+
+  const handleLike = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setPhotos(prev => prev.map(p => p.id === id ? { ...p, likes: p.likes + 1 } : p));
+  };
+
+  const handleAddPhoto = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim() || !newNote.trim()) {
+      setAlertMsg('사진 제목과 추억 한 구절을 채워야 인화가 됩니다!');
+      return;
+    }
+
+    const randomSeed = Math.random().toString(36).substring(7);
+    const mockImage = `https://picsum.photos/seed/${randomSeed}/600/600`;
+
+    const newPolaroid: PolaroidPhoto = {
+      id: `photo-${Date.now()}`,
+      title: newTitle,
+      date: new Date().toISOString().slice(0, 10).replace(/-/g, '. '),
+      note: newNote,
+      imageUrl: mockImage,
+      filter: newFilter,
+      likes: 1
+    };
+
+    setPhotos([newPolaroid, ...photos]);
+    setNewTitle('');
+    setNewNote('');
+    setNewFilter('vintage');
+    setAlertMsg('');
+    setIsAdding(false);
+  };
+
+  const getFilterStyle = (filter: string) => {
+    switch (filter) {
+      case 'sepia': return 'sepia brightness-90 contrast-105 saturate-75';
+      case 'cyan': return 'hue-rotate-180 saturate-120 saturate-75 contrast-95';
+      case 'neon': return 'contrast-125 saturate-150 saturate-125';
+      case 'crayon': return 'contrast-95 saturate-110 sepia-[0.1]';
+      default: return 'brightness-105 contrast-90 saturate-[0.85]';
+    }
+  };
+
+  return (
+    <div id="retro-photo-album-section" className="flex flex-col gap-6 font-sans">
+      
+      {/* Intro strip */}
+      <div className="flex items-center justify-between border-b-2 border-[#A3C1E0] pb-3 flex-wrap gap-2">
+        <div>
+          <h2 className="text-sm font-bold text-[#2D5A9E] flex items-center gap-1.5 leading-none font-display">
+            <Camera className="text-[#2D5A9E]" size={18} />
+            추억 사진첩 (Polaroid Gallery)
+          </h2>
+          <p className="text-[10px] text-gray-500 mt-1">
+            아날로그 필름 감성과 삐뚤빼뚤 낙서로 남겨둔 그 시절 우리의 소중한 우정 컷.
+          </p>
+        </div>
+
+        {/* Action Toggle Button */}
+        <button
+          id="btn-toggle-add-photo"
+          onClick={() => {
+            setIsAdding(!isAdding);
+            setAlertMsg('');
+          }}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md font-bold text-[10.5px] border cursor-pointer transition-colors ${isAdding ? 'bg-zinc-850 text-white border-black' : 'bg-[#2D5A9E] hover:bg-[#1A3E75] text-white border-[#2D5A9E]'}`}
+        >
+          {isAdding ? '다이어리 닫기' : '추억 사진 추가하기 (Snap!)'}
+          <Plus size={11} className={isAdding ? 'rotate-45 transition-transform' : ''} />
+        </button>
+      </div>
+
+      {/* Snap Memory form box */}
+      {isAdding && (
+        <form
+          id="add-photo-retro-form"
+          onSubmit={handleAddPhoto}
+          className="bg-white border border-[#A3C1E0] rounded-lg p-5 font-mono text-xs flex flex-col gap-3.5 animate-fadeIn shadow-sm"
+        >
+          <div className="flex items-center gap-1.5 text-[#2D5A9E] font-bold">
+            <Sparkles size={14} className="text-[#FF5555]" />
+            <span>추억 한 페이지 현상하기</span>
+          </div>
+
+          {alertMsg && (
+            <div className="bg-red-50 text-red-600 p-2 rounded text-[10px] flex items-center gap-1 border border-red-200">
+              <AlertCircle size={12} /> {alertMsg}
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+            <div>
+              <label className="block text-[10px] text-[#2D5A9E] font-bold mb-1 uppercase tracking-wider">사진 제목</label>
+              <input
+                id="photo-input-title"
+                type="text"
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                placeholder="예: 2002년 동네 골목대장 시절"
+                className="w-full bg-[#F8FAFC] border border-[#A3C1E0] rounded px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-[#2D5A9E] placeholder-slate-400 font-sans"
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] text-[#2D5A9E] font-bold mb-1 uppercase tracking-wider">필터 선택 (Filter Effect)</label>
+              <select
+                id="photo-select-filter"
+                value={newFilter}
+                onChange={(e: any) => setNewFilter(e.target.value)}
+                className="w-full bg-[#F8FAFC] border border-[#A3C1E0] rounded px-2 py-1.5 text-[11px] focus:outline-none focus:border-[#2D5A9E] font-sans"
+              >
+                <option value="vintage">Classic Soft (기본 감성)</option>
+                <option value="sepia">Warm Sepia (노르스름 세피아)</option>
+                <option value="cyan">Cyan Tint (추운 겨울철 뽀샤시)</option>
+                <option value="crayon">Crayon Soft (꿈꾸는 듯한 소년시대)</option>
+                <option value="neon">Vibrant Y2K (블링블링 고대비)</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-[10px] text-[#2D5A9E] font-bold mb-1 uppercase tracking-wider">추억 일기 (낙서)</label>
+            <textarea
+              id="photo-input-note"
+              value={newNote}
+              onChange={(e) => setNewNote(e.target.value)}
+              placeholder="예: 방과후 문방구 평상에 누워 아폴로 한 줄 먹으면서 키득거리던 소박한 대화. 정말 웃겼는데!!"
+              rows={2}
+              className="w-full bg-[#F8FAFC] border border-[#A3C1E0] rounded px-2.5 py-1.5 text-[11px] focus:outline-none focus:border-[#2D5A9E] placeholder-slate-400 font-sans resize-none"
+            />
+          </div>
+
+          <div className="flex items-center justify-between mt-1">
+            <span className="text-[10px] text-gray-500 font-retro">※ 사진은 Y2K 랜덤 캡슐에서 즉시 인화되어 앨범에 걸립니다.</span>
+            <button
+              id="photo-btn-snap"
+              type="submit"
+              className="bg-[#2D5A9E] hover:bg-[#1A3E75] text-white font-extrabold text-[10.5px] uppercase tracking-wider px-4 py-2 rounded transition-colors cursor-pointer"
+            >
+              인화하기 (Snap Memory)
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* Polaroid Grid */}
+      <div id="polaroid-gallery-board" className="grid grid-cols-1 sm:grid-cols-2 gap-8 py-2">
+        {photos.map((photo, index) => {
+          // alternate index-based tilt rotation to give an authentic overlapping corkboard look!
+          const rotationAngle = index % 3 === 0 ? '-rotate-2' : index % 3 === 1 ? 'rotate-1' : 'rotate-3';
+          
+          return (
+            <div
+              key={photo.id}
+              id={`polaroid-card-${photo.id}`}
+              className={`bg-white border border-[#A3C1E0] rounded-sm p-4 ${rotationAngle} hover:rotate-0 hover:scale-105 hover:shadow-lg transition-all duration-300 shadow-sm flex flex-col items-center select-none group relative`}
+            >
+              
+              {/* Pushpin decor vector element in blue theme */}
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-[#2D5A9E] border-2 border-white rounded-full shadow filter drop-shadow z-20">
+                <div className="w-1.5 h-1.5 bg-sky-200 rounded-full m-auto mt-0.5 animate-pulse"></div>
+              </div>
+
+              {/* Photo Compartment */}
+              <div className="w-full aspect-square overflow-hidden bg-zinc-900 border border-gray-150 relative">
+                <img
+                  src={photo.imageUrl}
+                  alt={photo.title}
+                  className={`w-full h-full object-cover transition-all duration-500 ${getFilterStyle(photo.filter)}`}
+                  referrerPolicy="no-referrer"
+                />
+                
+                {/* Visual filter overlay name tag */}
+                <span className="absolute bottom-1.5 right-1.5 bg-black/55 text-white text-[8px] font-mono px-1 rounded">
+                  {photo.filter.toUpperCase()} tone
+                </span>
+              </div>
+
+              {/* Handwriting Title Footer */}
+              <div className="w-full pt-4 flex flex-col items-center text-center font-retro text-zinc-800">
+                {/* Bold handwritten titles */}
+                <h4 className="text-[17px] font-bold tracking-tight text-gray-950 leading-none">
+                  {photo.title}
+                </h4>
+                
+                {/* Authentic date signature */}
+                <p className="text-[11px] text-gray-400 mt-1 font-mono">
+                  {photo.date}
+                </p>
+
+                {/* Polaroid description caption scribbling */}
+                <p className="text-[13px] text-[#2D5A9E] leading-tight mt-2.5 font-bold px-1 select-text">
+                  {photo.note}
+                </p>
+              </div>
+
+              {/* Micro actions inside photo label margins */}
+              <div className="w-full mt-4 pt-2 border-t border-dotted border-gray-150 flex items-center justify-between text-[11px] text-slate-400 font-mono">
+                <span>Like it!</span>
+                <button
+                  id={`btn-like-photo-${photo.id}`}
+                  onClick={(e) => handleLike(photo.id, e)}
+                  className="flex items-center gap-1 cursor-pointer text-pink-500 hover:text-pink-600 font-bold active:scale-125 duration-100 animate-none"
+                >
+                  <Heart size={12} className="fill-pink-500 stroke-pink-500" />
+                  <span>{photo.likes}</span>
+                </button>
+              </div>
+
+            </div>
+          );
+        })}
+      </div>
+
+    </div>
+  );
+}
